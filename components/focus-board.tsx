@@ -24,9 +24,12 @@ import {
   applyAiPlan,
   buildFallbackAiPlan,
   buildMorningTriagePlan,
+  contextTagSchema,
   createTask,
   dueBucketSchema,
   detectAvoidanceFallback,
+  effortSchema,
+  energyLevelSchema,
   parseBrainDumpFallback,
   focusPresetSchema,
   presetMeta,
@@ -42,6 +45,7 @@ import { cn } from "@/lib/utils"
 const STORAGE_KEY = "now-next-later.smart-focus"
 const AI_ENABLED_KEY = "now-next-later.ai-enabled"
 const AI_MODEL_KEY = "now-next-later.ai-model"
+const BROWSER_OLLAMA_URL = "http://127.0.0.1:11434"
 
 const draftSchema = z.string().trim().min(1, "Write something").max(100, "Max 100 characters")
 
@@ -86,6 +90,35 @@ const avoidanceSchema = z.array(
 type AiStatus = z.infer<typeof statusSchema>
 type AvoidanceInsight = z.infer<typeof avoidanceSchema>[number]
 
+const browserBrainDumpSchema = z.object({
+  tasks: z.array(
+    z.object({
+      title: z.string(),
+      dueBucket: dueBucketSchema,
+      effort: effortSchema,
+      energy: energyLevelSchema,
+      context: contextTagSchema,
+      suggestedFirstStep: z.string(),
+    })
+  ),
+})
+
+const browserTagsSchema = z.object({
+  models: z
+    .array(
+      z.object({
+        name: z.string(),
+        size: z.number().optional(),
+        modified_at: z.string().optional(),
+      })
+    )
+    .optional(),
+})
+
+const browserPsSchema = z.object({
+  models: z.array(z.object({ name: z.string() })).optional(),
+})
+
 const defaultAiStatus: AiStatus = {
   reachable: false,
   installed: false,
@@ -107,6 +140,13 @@ const localStarterModels = [
   { name: "phi4-mini", badge: "Lighter" },
 ] as const
 
+const preferredCloudModels = [
+  "glm-4.7:cloud",
+  "minimax-m2.1:cloud",
+  "qwen3.5:cloud",
+  "gpt-oss:120b-cloud",
+] as const
+
 async function requestJson<T>(input: RequestInfo, init?: RequestInit) {
   const response = await fetch(input, {
     ...init,
@@ -123,6 +163,23 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit) {
   }
 
   return data as T
+}
+
+async function requestBrowserOllamaJson<T>(pathname: string, init?: RequestInit) {
+  const response = await fetch(`${BROWSER_OLLAMA_URL}${pathname}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    throw new Error("Could not reach Ollama on this device.")
+  }
+
+  return (await response.json()) as T
 }
 
 export default function FocusBoard() {
@@ -158,6 +215,10 @@ export default function FocusBoard() {
   const [showCaptureMenu, setShowCaptureMenu] = useState(false)
   const [showFocusMenu, setShowFocusMenu] = useState(false)
   const [showNowFullscreen, setShowNowFullscreen] = useState(false)
+  const [isHostedDeployment, setIsHostedDeployment] = useState(false)
+  const [browserAiStatus, setBrowserAiStatus] = useState<AiStatus>(defaultAiStatus)
+  const [browserOllamaConnected, setBrowserOllamaConnected] = useState(false)
+  const [isConnectingBrowserOllama, setIsConnectingBrowserOllama] = useState(false)
   const hasSavedRef = useRef(false)
 
   useEffect(() => {
@@ -212,6 +273,15 @@ export default function FocusBoard() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+
+    const host = window.location.hostname
+    setIsHostedDeployment(host !== "localhost" && host !== "127.0.0.1")
+  }, [])
+
+  useEffect(() => {
     if (!isHydrated) {
       return
     }
@@ -242,6 +312,57 @@ export default function FocusBoard() {
   }, [tasks])
 
   const refreshAiStatus = useCallback(async () => {
+    if (browserOllamaConnected) {
+      try {
+        const tags = browserTagsSchema.parse(await requestBrowserOllamaJson("/api/tags"))
+        const running = browserPsSchema.parse(await requestBrowserOllamaJson("/api/ps"))
+        const localModels = (tags.models ?? []).sort((left, right) => (left.size ?? 0) - (right.size ?? 0))
+        const models = [
+          ...localModels.map((model) => ({
+            name: model.name,
+            size: model.size ?? 0,
+            sizeLabel: model.size ? `${(model.size / 1024 ** 3).toFixed(1)} GB` : "0 B",
+            modifiedAt: model.modified_at ?? null,
+            kind: "local" as const,
+          })),
+          ...preferredCloudModels.map((name) => ({
+            name,
+            size: 0,
+            sizeLabel: "Cloud",
+            modifiedAt: null,
+            kind: "cloud" as const,
+          })),
+        ]
+
+        const status: AiStatus = {
+          reachable: true,
+          installed: true,
+          selectedModel:
+            localModels.find((model) => localStarterModels.some((candidate) => candidate.name === model.name))?.name ??
+            localModels[0]?.name ??
+            null,
+          modelPath: "Available through this browser connection",
+          storageExists: false,
+          storageBytes: 0,
+          storageLabel: "Unavailable here",
+          localModelCount: localModels.length,
+          models,
+          runningModels: (running.models ?? []).map((model) => model.name),
+        }
+
+        setBrowserAiStatus(status)
+
+        if (!selectedModel || !status.models.some((model) => model.name === selectedModel)) {
+          setSelectedModel(status.selectedModel)
+        }
+      } catch {
+        setBrowserOllamaConnected(false)
+        setBrowserAiStatus(defaultAiStatus)
+      }
+
+      return
+    }
+
     setIsRefreshingStatus(true)
 
     try {
@@ -256,11 +377,63 @@ export default function FocusBoard() {
     } finally {
       setIsRefreshingStatus(false)
     }
-  }, [selectedModel])
+  }, [browserOllamaConnected, selectedModel])
 
   useEffect(() => {
     void refreshAiStatus()
   }, [refreshAiStatus])
+
+  const connectBrowserOllama = async () => {
+    setIsConnectingBrowserOllama(true)
+    setError("")
+
+    try {
+      const tags = browserTagsSchema.parse(await requestBrowserOllamaJson("/api/tags"))
+      const running = browserPsSchema.parse(await requestBrowserOllamaJson("/api/ps"))
+      const localModels = (tags.models ?? []).sort((left, right) => (left.size ?? 0) - (right.size ?? 0))
+      const status: AiStatus = {
+        reachable: true,
+        installed: true,
+        selectedModel:
+          localModels.find((model) => localStarterModels.some((candidate) => candidate.name === model.name))?.name ??
+          localModels[0]?.name ??
+          null,
+        modelPath: "Available through this browser connection",
+        storageExists: false,
+        storageBytes: 0,
+        storageLabel: "Unavailable here",
+        localModelCount: localModels.length,
+        models: [
+          ...localModels.map((model) => ({
+            name: model.name,
+            size: model.size ?? 0,
+            sizeLabel: model.size ? `${(model.size / 1024 ** 3).toFixed(1)} GB` : "0 B",
+            modifiedAt: model.modified_at ?? null,
+            kind: "local" as const,
+          })),
+          ...preferredCloudModels.map((name) => ({
+            name,
+            size: 0,
+            sizeLabel: "Cloud",
+            modifiedAt: null,
+            kind: "cloud" as const,
+          })),
+        ],
+        runningModels: (running.models ?? []).map((model) => model.name),
+      }
+
+      setBrowserAiStatus(status)
+      setBrowserOllamaConnected(true)
+      if (!selectedModel) {
+        setSelectedModel(status.selectedModel)
+      }
+      setActionMessage("Connected to local Ollama through this browser.")
+    } catch {
+      setError("Could not connect to local Ollama from this browser. Ollama may not allow this site yet.")
+    } finally {
+      setIsConnectingBrowserOllama(false)
+    }
+  }
 
   const clearFocusOverlay = () => {
     setAiPlan(null)
@@ -282,8 +455,9 @@ export default function FocusBoard() {
   const completedTasks = [...tasks]
     .filter((task) => task.completedAt !== null)
     .sort((left, right) => (right.completedAt ?? 0) - (left.completedAt ?? 0))
+  const effectiveAiStatus = browserOllamaConnected ? browserAiStatus : aiStatus
   const activeModel = aiEnabled ? selectedModel : null
-  const selectedModelInfo = aiStatus.models.find((model) => model.name === selectedModel) ?? null
+  const selectedModelInfo = effectiveAiStatus.models.find((model) => model.name === selectedModel) ?? null
   const formatCompletedAt = (timestamp: number | null) => {
     if (!timestamp) {
       return ""
@@ -334,7 +508,62 @@ export default function FocusBoard() {
     setActionMessage("")
 
     try {
-      if (activeModel && aiStatus.reachable) {
+      if (activeModel && effectiveAiStatus.reachable) {
+        if (browserOllamaConnected) {
+          const prompt = `
+You are helping organize an ADHD-friendly task inbox.
+
+Rules:
+- Do not rewrite the user's meaning.
+- Split messy notes into separate tasks when needed.
+- Keep task titles short and very close to the user's wording.
+- Add metadata only.
+- Provide one gentle first step for each task.
+
+Return JSON with:
+- tasks: array of { title, dueBucket, effort, energy, context, suggestedFirstStep }
+
+Allowed values:
+- dueBucket: today | soon | someday
+- effort: quick | medium | deep
+- energy: low | medium | high
+- context: anywhere | computer | home | errands | calls
+
+User dump:
+${bulkDraft}
+`.trim()
+
+          const aiResponse = browserBrainDumpSchema.parse(
+            JSON.parse(
+              (
+                await requestBrowserOllamaJson<{ response?: string }>("/api/generate", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    model: activeModel,
+                    prompt,
+                    stream: false,
+                    format: z.toJSONSchema(browserBrainDumpSchema),
+                    options: { temperature: 0.2 },
+                  }),
+                })
+              ).response ?? "{}"
+            )
+          )
+
+          const aiTasks = tasksSchema.parse(
+            aiResponse.tasks.map((task) =>
+              createTask(task.title, {
+                dueBucket: task.dueBucket,
+                effort: task.effort,
+                energy: task.energy,
+                context: task.context,
+                suggestedFirstStep: task.suggestedFirstStep,
+              })
+            )
+          )
+
+          setTasks((current) => [...aiTasks, ...current])
+        } else {
         const result = await requestJson<{ usedAi: boolean; tasks: Task[] }>("/api/ai/brain-dump", {
           method: "POST",
           body: JSON.stringify({
@@ -344,6 +573,7 @@ export default function FocusBoard() {
         })
 
         setTasks((current) => [...result.tasks, ...current])
+        }
       } else {
         const fallbackTasks = parseBrainDumpFallback(bulkDraft)
 
@@ -369,7 +599,70 @@ export default function FocusBoard() {
     setError("")
 
     try {
-      if (activeModel && aiStatus.reachable) {
+      if (activeModel && effectiveAiStatus.reachable) {
+        if (browserOllamaConnected) {
+          const prompt =
+            mode === "refocus"
+              ? `
+You are an ADHD-friendly focus assistant. Do not rewrite task titles.
+
+Use the user's focus situation to choose:
+- 1 task for now
+- up to 2 tasks for next
+- put the rest in notNow
+
+Keep the reasoning brief, calm, and practical.
+
+User situation:
+${focusPrompt || "Help me choose what matters most right now."}
+
+Tasks:
+${tasks
+  .filter((task) => task.completedAt === null)
+  .map(
+    (task) =>
+      `- id=${task.id}; title=${task.title}; due=${task.dueBucket}; effort=${task.effort}; energy=${task.energy}; context=${task.context}; deferCount=${task.deferCount}; suggestedFirstStep=${task.suggestedFirstStep ?? "none"}`
+  )
+  .join("\n")}
+`.trim()
+              : `
+Create a morning triage for an ADHD-friendly focus app.
+
+Choose:
+- 1 main focus
+- 2 backup tasks
+- 3 things to ignore today if needed
+
+Return JSON only.
+
+Tasks:
+${tasks
+  .filter((task) => task.completedAt === null)
+  .map(
+    (task) =>
+      `- id=${task.id}; title=${task.title}; due=${task.dueBucket}; effort=${task.effort}; energy=${task.energy}; context=${task.context}; deferCount=${task.deferCount}`
+  )
+  .join("\n")}
+`.trim()
+
+          const aiResponse = await requestBrowserOllamaJson<{ response?: string }>("/api/generate", {
+            method: "POST",
+            body: JSON.stringify({
+              model: activeModel,
+              prompt,
+              stream: false,
+              format: z.toJSONSchema(aiPlanSchema),
+              options: { temperature: 0.2 },
+            }),
+          })
+
+          setAiPlan(aiPlanSchema.parse(JSON.parse(aiResponse.response ?? "{}")))
+          setActionMessage(
+            mode === "triage"
+              ? "Morning triage updated your focus using local Ollama from this browser."
+              : "Refocus updated your list using local Ollama from this browser."
+          )
+        } else {
         const endpoint = mode === "refocus" ? "/api/ai/refocus" : "/api/ai/triage"
         const payload =
           mode === "refocus"
@@ -395,6 +688,7 @@ export default function FocusBoard() {
             ? "Morning triage updated your focus using local AI."
             : "Refocus updated your list using local AI."
         )
+        }
       } else {
         const fallbackPlan =
           mode === "triage"
@@ -421,7 +715,44 @@ export default function FocusBoard() {
     setActionMessage("")
 
     try {
-      if (activeModel && aiStatus.reachable) {
+      if (activeModel && effectiveAiStatus.reachable) {
+        if (browserOllamaConnected) {
+          const prompt = `
+Analyze these repeatedly deferred tasks for an ADHD-friendly focus app.
+
+For each task, suggest whether it seems:
+- unclear
+- too big
+- blocked
+- not actually important
+
+Then suggest a few next moves like split, defer, delete, delegate, or schedule.
+
+Tasks:
+${tasks
+  .filter((task) => task.completedAt === null && task.deferCount > 0)
+  .map(
+    (task) =>
+      `- id=${task.id}; title=${task.title}; deferCount=${task.deferCount}; due=${task.dueBucket}; effort=${task.effort}; energy=${task.energy}; context=${task.context}`
+  )
+  .join("\n")}
+`.trim()
+
+          const aiResponse = await requestBrowserOllamaJson<{ response?: string }>("/api/generate", {
+            method: "POST",
+            body: JSON.stringify({
+              model: activeModel,
+              prompt,
+              stream: false,
+              format: z.toJSONSchema(z.object({ insights: avoidanceSchema })),
+              options: { temperature: 0.2 },
+            }),
+          })
+
+          const parsed = z.object({ insights: avoidanceSchema }).parse(JSON.parse(aiResponse.response ?? "{}"))
+          setAvoidanceInsights(parsed.insights)
+          setActionMessage("Avoidance check finished using local Ollama from this browser.")
+        } else {
         const result = await requestJson<{ usedAi: boolean; insights: AvoidanceInsight[] }>(
           "/api/ai/avoidance",
           {
@@ -435,6 +766,7 @@ export default function FocusBoard() {
 
         setAvoidanceInsights(avoidanceSchema.parse(result.insights))
         setActionMessage("Avoidance check finished using local AI.")
+        }
       } else {
         setAvoidanceInsights(detectAvoidanceFallback(tasks))
         setActionMessage("Avoidance check finished using built-in logic.")
@@ -938,7 +1270,7 @@ export default function FocusBoard() {
             <CardHeader className="border-b border-border/70">
               <CardTitle className="text-base">Refocus</CardTitle>
               <CardDescription>
-                {activeModel && aiStatus.reachable ? "Using local AI." : "Using built-in logic."}
+                {activeModel && effectiveAiStatus.reachable ? "Using local AI." : "Using built-in logic."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
@@ -992,7 +1324,7 @@ export default function FocusBoard() {
                   <Badge
                     variant="secondary"
                     className={
-                      aiStatus.reachable
+                  effectiveAiStatus.reachable
                         ? "gap-2 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200"
                         : "gap-2 bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200"
                     }
@@ -1000,12 +1332,12 @@ export default function FocusBoard() {
                     <span
                       aria-hidden="true"
                       className={
-                        aiStatus.reachable
+                        effectiveAiStatus.reachable
                           ? "h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
                           : "h-2 w-2 rounded-full bg-rose-500 animate-pulse"
                       }
                     />
-                    {aiStatus.reachable ? "Ollama available" : "Ollama not installed"}
+                    {effectiveAiStatus.reachable ? "Ollama available" : "Ollama not installed"}
                   </Badge>
                   <Badge variant="outline">
                     {selectedModel
@@ -1016,6 +1348,17 @@ export default function FocusBoard() {
                 <p className="text-xs text-muted-foreground">
                   Pick one local or cloud model. If nothing is ready, the app falls back to built-in focus logic.
                 </p>
+                {isHostedDeployment && !browserOllamaConnected ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => void connectBrowserOllama()} disabled={isConnectingBrowserOllama}>
+                      {isConnectingBrowserOllama ? <LoaderCircle className="animate-spin" /> : null}
+                      Connect local Ollama on this device
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Only needed on the deployed app. This tries your browser&apos;s own `localhost:11434`.
+                    </p>
+                  </div>
+                ) : null}
                 <div className="space-y-2">
                   <Button size="sm" variant="outline" onClick={() => setShowStorageInstructions((current) => !current)}>
                     {showStorageInstructions ? "Hide device details" : "Show device details"}
@@ -1025,19 +1368,19 @@ export default function FocusBoard() {
                       <div className="grid gap-2 sm:grid-cols-2">
                         <div className="rounded-xl border border-border/60 bg-background/70 p-3">
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Ollama on this device</p>
-                          <p className="mt-1 text-sm font-medium">{aiStatus.reachable ? "Available" : "Not available"}</p>
+                          <p className="mt-1 text-sm font-medium">{effectiveAiStatus.reachable ? "Available" : "Not available"}</p>
                         </div>
                         <div className="rounded-xl border border-border/60 bg-background/70 p-3">
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Downloaded local models</p>
-                          <p className="mt-1 text-sm font-medium">{aiStatus.localModelCount > 0 ? String(aiStatus.localModelCount) : "None yet"}</p>
+                          <p className="mt-1 text-sm font-medium">{effectiveAiStatus.localModelCount > 0 ? String(effectiveAiStatus.localModelCount) : "None yet"}</p>
                         </div>
                         <div className="rounded-xl border border-border/60 bg-background/70 p-3">
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Space used</p>
-                          <p className="mt-1 text-sm font-medium">{aiStatus.storageLabel}</p>
+                          <p className="mt-1 text-sm font-medium">{effectiveAiStatus.storageLabel}</p>
                         </div>
                         <div className="rounded-xl border border-border/60 bg-background/70 p-3">
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Local model folder</p>
-                          <p className="mt-1 break-all text-sm font-medium">{aiStatus.modelPath}</p>
+                          <p className="mt-1 break-all text-sm font-medium">{effectiveAiStatus.modelPath}</p>
                         </div>
                       </div>
                       <div className="mt-4 space-y-2">
@@ -1047,7 +1390,7 @@ export default function FocusBoard() {
                             size="sm"
                             variant="outline"
                             onClick={() => void runStorageAction("deleteAllLocalModels")}
-                            disabled={isCleaningStorage || aiStatus.localModelCount === 0}
+                            disabled={isCleaningStorage || effectiveAiStatus.localModelCount === 0 || browserOllamaConnected}
                           >
                             Delete downloaded local models
                           </Button>
@@ -1055,7 +1398,7 @@ export default function FocusBoard() {
                             size="sm"
                             variant="outline"
                             onClick={() => void runStorageAction("clearLogs")}
-                            disabled={isCleaningStorage}
+                            disabled={isCleaningStorage || browserOllamaConnected}
                           >
                             Clear Ollama logs
                           </Button>
@@ -1136,7 +1479,7 @@ export default function FocusBoard() {
                     <div className="mt-5">
                       <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Cloud starter options</p>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {aiStatus.models
+                        {effectiveAiStatus.models
                           .filter((model) => model.kind === "cloud")
                           .map((model) => (
                             <Button
@@ -1213,7 +1556,7 @@ export default function FocusBoard() {
                 {aiModelTab === "local" ? (
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      {aiStatus.models
+                      {effectiveAiStatus.models
                         .filter((model) => model.kind === "local")
                         .map((model) => (
                           <Button
@@ -1225,7 +1568,7 @@ export default function FocusBoard() {
                             {model.name} · {model.sizeLabel}
                           </Button>
                         ))}
-                      {aiStatus.localModelCount === 0 ? null : null}
+                      {effectiveAiStatus.localModelCount === 0 ? null : null}
                     </div>
                   </div>
                 ) : null}
