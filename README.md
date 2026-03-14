@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Now / Next / Later
 
-## Getting Started
+A focus-first task app for people who get overwhelmed by long lists and typical reminder or task managers. For many people, especially with ADHD (like myself), the hard part is not storing tasks. It is deciding what matters now when everything feels equally loud.
 
-First, run the development server:
+Typical reminder and task apps like Apple Reminders, Google Tasks, and Todoist are built around lists: lists of tasks, lists of lists, due dates, reminders, priorities, and notifications. Over time these systems grow into long backlogs of unfinished tasks and deadlines. Instead of reducing mental load, the app itself can start to feel like another thing you have to manage.
+
+I have made this app particularly to help reduce the noise:
+
+- `Now`: the one task worth focusing on right now
+- `Next`: a short support queue
+- `Not now`: everything else, kept out of the way but still safe
+
+The goal is not to be a giant productivity system. It is to help answer one question quickly:
+
+`What should I do right now?`
+
+This project is designed around that problem:
+
+- quick capture for notes, reminders, and messy thoughts
+- brain-dump import that turns a rough list into separate tasks
+- focus modes like `Pick for me`, `Quick wins`, `Low energy`, `15 minutes`, and `Deep work`
+- a calmer main view where `Now` and `Next` stay in focus
+- optional AI through Ollama, with a built-in fallback when AI is not available
+
+Main goal is:
+- clarity over feature overload
+- reducing overwhelm
+- making task choice easier
+- building a more useful ADHD-friendly focus layer on top of ordinary task capture
+
+⚠️ Note: This is a small product prototype built to explore a simple focus-first task model. It is not a production-ready app as of now.
+
+## All features
+
+- Focus dashboard with `Now`, `Next`, `Not now`, `Avoidance`, and `Done`
+- Quick add
+- Paste messy list import
+- Editable task metadata:
+  - `Today`, `Soon`, `Someday`
+  - `Quick`, `Medium`, `Deep`
+  - `Low energy`, `Medium energy`, `High energy`
+  - `Anywhere`, `Computer`, `Home`, `Errands`, `Calls`
+- Focus tools:
+  - `Refocus`
+  - `Morning triage`
+  - `Avoidance check`
+- English and Swedish UI
+- Light and dark mode
+- Local persistence with `localStorage`
+- Optional Ollama integration for local or cloud-backed AI
+
+## AI is optional
+
+The app works without AI.
+
+If no AI model is available, it falls back to built-in focus logic.
+
+### Use without AI
+
+You can use the app immediately with:
+
+- quick add
+- messy list import
+- manual task editing
+- built-in ranking and focus modes
+
+No Ollama setup is required.
+
+### Use with Ollama AI
+
+This app can optionally use [Ollama](https://ollama.com/) for:
+
+- smarter brain-dump cleanup
+- natural-language refocus
+- morning triage
+- avoidance checks
+
+You can use either:
+
+- a downloaded local Ollama model
+- a cloud model through Ollama, if your Ollama app is signed in
+
+### Basic Ollama setup
+
+1. Install Ollama from [ollama.com/download](https://ollama.com/download).
+2. Open the app.
+3. In this project, open `AI settings`.
+4. Choose either `Use local model` or `Use cloud model`.
+5. Follow the guided setup in the app.
+
+### Example local model command
+
+If Ollama is already installed, this is an example of a local model command:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+ollama run gemma3:4b
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+That downloads the model locally if it is not already installed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Ollama support
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Ollama support works differently depending on where the app runs:
 
-## Learn More
+- Local development on your own machine:
+  local Ollama features can work if Ollama is installed and reachable.
+- Public deployment:
+  the app still works, but it will usually fall back to built-in logic until a self-hosted AI backend is implemented.
+  
+In other words:
 
-To learn more about Next.js, take a look at the following resources:
+- the app is fully usable without AI
+- local Ollama is best for personal/local use
+- public AI support needs extra backend work
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Next.js](https://nextjs.org/)
+- [React](https://react.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [next-themes](https://github.com/pacocoursey/next-themes)
+- [Zod](https://zod.dev/)
+- [Lucide](https://lucide.dev/)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
