@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import {
   applyAiPlan,
+  buildFallbackAiPlan,
   buildMorningTriagePlan,
   createTask,
   dueBucketSchema,
@@ -36,6 +37,7 @@ import {
   type Task,
 } from "@/lib/focus"
 import { useCopy } from "@/components/language-provider"
+import { cn } from "@/lib/utils"
 
 const STORAGE_KEY = "now-next-later.smart-focus"
 const AI_ENABLED_KEY = "now-next-later.ai-enabled"
@@ -155,7 +157,31 @@ export default function FocusBoard() {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [showCaptureMenu, setShowCaptureMenu] = useState(false)
   const [showFocusMenu, setShowFocusMenu] = useState(false)
+  const [showNowFullscreen, setShowNowFullscreen] = useState(false)
   const hasSavedRef = useRef(false)
+
+  useEffect(() => {
+    if (!showNowFullscreen) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowNowFullscreen(false)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [showNowFullscreen])
+
+  useEffect(() => {
+    document.body.style.overflow = showNowFullscreen ? "hidden" : ""
+
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [showNowFullscreen])
 
   useEffect(() => {
     startTransition(() => {
@@ -270,6 +296,16 @@ export default function FocusBoard() {
       hour: "2-digit",
       minute: "2-digit",
     }).format(timestamp)
+  }
+
+  const freezeCurrentLayout = () => {
+    setAiPlan({
+      summary: "Manual edit preserved the current layout.",
+      nowIds: nowTasks.map((task) => task.id),
+      nextIds: nextTasks.map((task) => task.id),
+      notNowIds: notNowTasks.map((task) => task.id),
+      reasons: Object.fromEntries(rankedTasks.map((task) => [task.id, task.reason])),
+    })
   }
 
   const addQuickTask = () => {
@@ -446,6 +482,7 @@ export default function FocusBoard() {
   }
 
   const handleUpdateTitle = (taskId: string, title: string) => {
+    freezeCurrentLayout()
     updateTask(taskId, (task) => ({ ...task, title }))
   }
 
@@ -454,6 +491,7 @@ export default function FocusBoard() {
     field: "dueBucket" | "effort" | "energy" | "context",
     value: Task[typeof field]
   ) => {
+    freezeCurrentLayout()
     updateTask(taskId, (task) => ({ ...task, [field]: value }))
   }
 
@@ -531,184 +569,229 @@ export default function FocusBoard() {
 
   return (
     <div className="w-full max-w-6xl space-y-6 pb-28">
-      {(error || actionMessage) ? (
-        <Card className="border border-border/80 bg-card/80 backdrop-blur">
-          <CardContent className="pt-5">
-            {error ? <p className="text-sm text-rose-500">{error}</p> : null}
-            {actionMessage ? <p className="text-sm text-emerald-600">{actionMessage}</p> : null}
-          </CardContent>
-        </Card>
-      ) : null}
+      <div
+        className={cn(
+          "space-y-6",
+          showNowFullscreen && "pointer-events-none select-none opacity-0"
+        )}
+        aria-hidden={showNowFullscreen}
+      >
+        {(error || actionMessage) ? (
+          <Card className="border border-border/80 bg-card/80 backdrop-blur">
+            <CardContent className="pt-5">
+              {error ? <p className="text-sm text-rose-500">{error}</p> : null}
+              {actionMessage ? <p className="text-sm text-emerald-600">{actionMessage}</p> : null}
+            </CardContent>
+          </Card>
+        ) : null}
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                {t.sections.inFocus}
+              </p>
+              <h3 className="text-lg font-semibold tracking-tight">{t.sections.inFocusTitle}</h3>
+            </div>
+            <Badge variant="secondary">{presetMeta[preset].label}</Badge>
+          </div>
+          <TaskColumn
+            status="now"
+            tasks={nowTasks}
+            isFullscreen={false}
+            onToggleFullscreen={() => setShowNowFullscreen((current) => !current)}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onStartNow={handleStartNow}
+            onSnooze={handleSnooze}
+            onUpdateTitle={handleUpdateTitle}
+            onUpdateMeta={handleUpdateMeta}
+          />
+        </section>
+
+        <section className="space-y-3">
+          <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              {t.sections.inFocus}
+              {t.sections.supportQueue}
             </p>
-            <h3 className="text-lg font-semibold tracking-tight">{t.sections.inFocusTitle}</h3>
+            <h3 className="text-lg font-semibold tracking-tight">{t.sections.supportQueueTitle}</h3>
           </div>
-          <Badge variant="secondary">{presetMeta[preset].label}</Badge>
-        </div>
-        <TaskColumn
-          status="now"
-          tasks={nowTasks}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-          onStartNow={handleStartNow}
-          onSnooze={handleSnooze}
-          onUpdateTitle={handleUpdateTitle}
-          onUpdateMeta={handleUpdateMeta}
-        />
-      </section>
+          <TaskColumn
+            status="next"
+            tasks={nextTasks}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onStartNow={handleStartNow}
+            onSnooze={handleSnooze}
+            onUpdateTitle={handleUpdateTitle}
+            onUpdateMeta={handleUpdateMeta}
+          />
+        </section>
 
-      <section className="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-            {t.sections.supportQueue}
-          </p>
-          <h3 className="text-lg font-semibold tracking-tight">{t.sections.supportQueueTitle}</h3>
-        </div>
-        <TaskColumn
-          status="next"
-          tasks={nextTasks}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-          onStartNow={handleStartNow}
-          onSnooze={handleSnooze}
-          onUpdateTitle={handleUpdateTitle}
-          onUpdateMeta={handleUpdateMeta}
-        />
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setShowNotNow((current) => !current)}>
-            {showNotNow ? t.toggles.hideNotNow : `${t.toggles.showNotNow} (${notNowTasks.length})`}
-          </Button>
-          <Button variant="outline" onClick={() => setShowAvoidance((current) => !current)}>
-            {showAvoidance ? t.toggles.hideAvoidance : t.toggles.showAvoidance}
-          </Button>
-          <Button variant="outline" onClick={() => setShowMomentum((current) => !current)}>
-            {showMomentum ? t.toggles.hideDoneList : `${t.toggles.showDoneList} (${completedTasks.length})`}
-          </Button>
-        </div>
-
-        {showNotNow ? (
-          <div className="motion-section space-y-3">
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                {t.sections.notNow}
-              </p>
-              <h3 className="text-lg font-semibold tracking-tight">{t.sections.notNowTitle}</h3>
-            </div>
-            <TaskColumn
-              status="notNow"
-              tasks={notNowTasks}
-              onComplete={handleComplete}
-              onDelete={handleDelete}
-              onStartNow={handleStartNow}
-              onSnooze={handleSnooze}
-              onUpdateTitle={handleUpdateTitle}
-              onUpdateMeta={handleUpdateMeta}
-            />
+        <section className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setShowNotNow((current) => !current)}>
+              {showNotNow ? t.toggles.hideNotNow : `${t.toggles.showNotNow} (${notNowTasks.length})`}
+            </Button>
+            <Button variant="outline" onClick={() => setShowAvoidance((current) => !current)}>
+              {showAvoidance ? t.toggles.hideAvoidance : t.toggles.showAvoidance}
+            </Button>
+            <Button variant="outline" onClick={() => setShowMomentum((current) => !current)}>
+              {showMomentum ? t.toggles.hideDoneList : `${t.toggles.showDoneList} (${completedTasks.length})`}
+            </Button>
           </div>
-        ) : null}
 
-        {showAvoidance ? (
-          <div className="motion-section space-y-3">
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                {t.sections.avoidance}
-              </p>
-              <h3 className="text-lg font-semibold tracking-tight">{t.sections.avoidanceTitle}</h3>
-            </div>
-            <Card className="border border-border/80 bg-card/80 backdrop-blur">
-              <CardContent className="pt-5">
-                {avoidanceInsights.length > 0 ? (
-                  <ul className="space-y-3">
-                    {avoidanceInsights.map((insight) => (
-                      <li key={insight.taskId} className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                        <p className="text-sm font-medium">{insight.taskTitle}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{insight.diagnosis}</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => handleStartNow(insight.taskId)}>
-                            {t.focusBoard.startNow}
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleComplete(insight.taskId)}>
-                            {t.focusBoard.markDone}
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleDelete(insight.taskId)}>
-                            {t.focusBoard.delete}
-                          </Button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/35 p-5">
-                    <p className="text-sm font-medium">No avoidance pattern detected yet</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t.focusBoard.noAvoidanceDesc}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ) : null}
-
-        {showMomentum ? (
-          <div className="motion-section space-y-3">
-            <div className="flex items-center justify-between gap-3">
+          {showNotNow ? (
+            <div className="motion-section space-y-3">
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                  {t.sections.momentum}
+                  {t.sections.notNow}
                 </p>
-                <h3 className="text-lg font-semibold tracking-tight">{t.sections.doneList}</h3>
+                <h3 className="text-lg font-semibold tracking-tight">{t.sections.notNowTitle}</h3>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearCompleted}
-                disabled={completedTasks.length === 0}
-              >
-                {t.toggles.clearDoneList}
-              </Button>
+              <TaskColumn
+                status="notNow"
+                tasks={notNowTasks}
+                onComplete={handleComplete}
+                onDelete={handleDelete}
+                onStartNow={handleStartNow}
+                onSnooze={handleSnooze}
+                onUpdateTitle={handleUpdateTitle}
+                onUpdateMeta={handleUpdateMeta}
+              />
             </div>
-            <Card className="border border-border/80 bg-card/80 backdrop-blur">
-              <CardContent className="pt-5">
-                {completedTasks.length > 0 ? (
-                  <ul className="space-y-3">
-                    {completedTasks.map((task) => (
-                      <li
-                        key={task.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 px-4 py-3"
-                      >
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">{task.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {t.focusBoard.doneOn} {formatCompletedAt(task.completedAt)}
-                          </p>
-                        </div>
-                        <Badge variant="outline">Done</Badge>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/35 p-5">
-                    <p className="text-sm font-medium">No done tasks yet</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t.focusBoard.noDoneDesc}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ) : null}
+          ) : null}
 
-      </section>
+          {showAvoidance ? (
+            <div className="motion-section space-y-3">
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                  {t.sections.avoidance}
+                </p>
+                <h3 className="text-lg font-semibold tracking-tight">{t.sections.avoidanceTitle}</h3>
+              </div>
+              <Card className="border border-border/80 bg-card/80 backdrop-blur">
+                <CardContent className="pt-5">
+                  {avoidanceInsights.length > 0 ? (
+                    <ul className="space-y-3">
+                      {avoidanceInsights.map((insight) => (
+                        <li key={insight.taskId} className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                          <p className="text-sm font-medium">{insight.taskTitle}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{insight.diagnosis}</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button size="sm" variant="secondary" onClick={() => handleStartNow(insight.taskId)}>
+                              {t.focusBoard.startNow}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleComplete(insight.taskId)}>
+                              {t.focusBoard.markDone}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDelete(insight.taskId)}>
+                              {t.focusBoard.delete}
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border bg-muted/35 p-5">
+                      <p className="text-sm font-medium">No avoidance pattern detected yet</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t.focusBoard.noAvoidanceDesc}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+
+          {showMomentum ? (
+            <div className="motion-section space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                    {t.sections.momentum}
+                  </p>
+                  <h3 className="text-lg font-semibold tracking-tight">{t.sections.doneList}</h3>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearCompleted}
+                  disabled={completedTasks.length === 0}
+                >
+                  {t.toggles.clearDoneList}
+                </Button>
+              </div>
+              <Card className="border border-border/80 bg-card/80 backdrop-blur">
+                <CardContent className="pt-5">
+                  {completedTasks.length > 0 ? (
+                    <ul className="space-y-3">
+                      {completedTasks.map((task) => (
+                        <li
+                          key={task.id}
+                          className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 px-4 py-3"
+                        >
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">{task.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {t.focusBoard.doneOn} {formatCompletedAt(task.completedAt)}
+                            </p>
+                          </div>
+                          <Badge variant="outline">Done</Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border bg-muted/35 p-5">
+                      <p className="text-sm font-medium">No done tasks yet</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t.focusBoard.noDoneDesc}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+        </section>
+      </div>
+
+      {showNowFullscreen ? (
+        <div className="fixed inset-0 z-30">
+          <button
+            type="button"
+            aria-label="Close focus mode"
+            className="absolute inset-0 bg-background/98 backdrop-blur-[64px]"
+            onClick={() => setShowNowFullscreen(false)}
+          />
+          <div className="absolute inset-x-3 top-22 bottom-3 md:inset-x-6 md:top-24 md:bottom-6">
+            <div className="relative mx-auto h-full w-full max-w-6xl">
+              {nextTasks.length > 0 ? (
+                <>
+                  <div className="pointer-events-none absolute inset-x-5 top-5 bottom-0 rounded-[2.8rem] border border-white/24 bg-white/16 shadow-[0_32px_72px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/8 dark:bg-white/[0.03]" />
+                  <div className="pointer-events-none absolute inset-x-10 top-10 bottom-0 rounded-[2.8rem] border border-white/18 bg-white/10 shadow-[0_24px_52px_rgba(15,23,42,0.05)] backdrop-blur-xl dark:border-white/6 dark:bg-white/[0.02]" />
+                </>
+              ) : null}
+
+              <div className="relative z-10 h-full">
+                <TaskColumn
+                  status="now"
+                  tasks={nowTasks}
+                  isFullscreen
+                  onToggleFullscreen={() => setShowNowFullscreen(false)}
+                  onComplete={handleComplete}
+                  onDelete={handleDelete}
+                  onStartNow={handleStartNow}
+                  onSnooze={handleSnooze}
+                  onUpdateTitle={handleUpdateTitle}
+                  onUpdateMeta={handleUpdateMeta}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="fixed right-6 bottom-6 z-30 flex flex-col items-end gap-3 md:right-10">
         {showCaptureMenu ? (
