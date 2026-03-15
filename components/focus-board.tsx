@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   TriangleAlert,
   WandSparkles,
+  X,
 } from "lucide-react"
 import { z } from "zod"
 import TaskColumn from "@/components/task-column"
@@ -472,6 +473,18 @@ export default function FocusBoard() {
     )
   }, [tasks])
 
+  useEffect(() => {
+    if (!actionMessage) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setActionMessage("")
+    }, 4000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [actionMessage])
+
   const rankedTasks = applyAiPlan(tasks, preset, aiPlan)
   const nowTasks = rankedTasks.filter((task) => task.lane === "now")
   const nextTasks = rankedTasks.filter((task) => task.lane === "next")
@@ -924,7 +937,43 @@ ${tasks
   }
 
   return (
-    <div className="w-full max-w-6xl space-y-6 pb-28">
+    <div className="w-full max-w-6xl space-y-6 pb-44 md:pb-28">
+      {(error || actionMessage) ? (
+        <div className="pointer-events-none fixed inset-x-4 bottom-24 z-50 flex justify-center md:inset-x-auto md:right-10 md:bottom-6">
+          <Card
+            className={cn(
+              "pointer-events-auto w-full max-w-md border shadow-2xl backdrop-blur",
+              error
+                ? "border-rose-200/80 bg-rose-50/95 dark:border-rose-500/20 dark:bg-rose-500/10"
+                : "border-emerald-200/80 bg-emerald-50/95 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+            )}
+          >
+            <CardContent className="flex items-start gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1 text-center md:text-left">
+                {error ? (
+                  <p className="text-sm text-rose-700 dark:text-rose-100">{error}</p>
+                ) : null}
+                {actionMessage ? (
+                  <p className="text-sm text-emerald-700 dark:text-emerald-100">{actionMessage}</p>
+                ) : null}
+              </div>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className="shrink-0 rounded-full"
+                onClick={() => {
+                  setError("")
+                  setActionMessage("")
+                }}
+                aria-label="Dismiss message"
+              >
+                <X />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
       <div
         className={cn(
           "space-y-6",
@@ -932,24 +981,17 @@ ${tasks
         )}
         aria-hidden={showNowFullscreen}
       >
-        {(error || actionMessage) ? (
-          <Card className="border border-border/80 bg-card/80 backdrop-blur">
-            <CardContent className="pt-5">
-              {error ? <p className="text-sm text-rose-500">{error}</p> : null}
-              {actionMessage ? <p className="text-sm text-emerald-600">{actionMessage}</p> : null}
-            </CardContent>
-          </Card>
-        ) : null}
-
         <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
                 {t.sections.inFocus}
               </p>
               <h3 className="text-lg font-semibold tracking-tight">{t.sections.inFocusTitle}</h3>
             </div>
-            <Badge variant="secondary">{presetMeta[preset].label}</Badge>
+            <Badge variant="secondary" className="shrink-0">
+              {presetMeta[preset].label}
+            </Badge>
           </div>
           <TaskColumn
             status="now"
@@ -1142,9 +1184,9 @@ ${tasks
         </div>
       ) : null}
 
-      <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end gap-3 md:right-10">
+      <div className="fixed inset-x-4 bottom-4 z-50 flex flex-col items-stretch gap-3 md:inset-x-auto md:right-10 md:bottom-6 md:items-end">
         {showCaptureMenu ? (
-          <Card className="w-[18rem] border border-border/80 bg-card/95 shadow-2xl backdrop-blur">
+          <Card className="w-full max-w-[22rem] self-center border border-border/80 bg-card/95 shadow-2xl backdrop-blur md:w-[18rem] md:self-auto">
             <CardContent className="space-y-2 pt-4">
               <Button className="w-full justify-start" variant="outline" onClick={() => openPanel("quick")}>
                 <ListTodo />
@@ -1159,7 +1201,7 @@ ${tasks
         ) : null}
 
         {showFocusMenu ? (
-          <Card className="w-[21rem] border border-border/80 bg-card/95 shadow-2xl backdrop-blur">
+          <Card className="w-full max-w-[26rem] self-center border border-border/80 bg-card/95 shadow-2xl backdrop-blur md:w-[21rem] md:self-auto">
             <CardHeader className="border-b border-border/70">
               <CardTitle className="text-base">Focus tools</CardTitle>
               <CardDescription>Choose a recommendation mode or run a focus action.</CardDescription>
@@ -1213,12 +1255,13 @@ ${tasks
         ) : null}
 
         {showQuickAdd ? (
-          <Card className="w-[22rem] border border-border/80 bg-card/95 shadow-2xl backdrop-blur">
+          <Card className="w-full max-w-[26rem] self-center border border-border/80 bg-card/95 shadow-2xl backdrop-blur md:w-[22rem] md:self-auto">
             <CardHeader className="border-b border-border/70">
               <CardTitle className="text-base">Quick add</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
               <Input
+                className="text-sm md:text-sm"
                 placeholder="Add a task, note, or reminder"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
@@ -1246,7 +1289,7 @@ ${tasks
                   ))}
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button variant="outline" onClick={closeFloatingPanels}>Close</Button>
                 <Button onClick={() => {
                   addQuickTask()
@@ -1260,7 +1303,7 @@ ${tasks
         ) : null}
 
         {showBrainDump ? (
-          <Card className="w-[24rem] border border-border/80 bg-card/95 shadow-2xl backdrop-blur">
+          <Card className="w-full max-w-[26rem] self-center border border-border/80 bg-card/95 shadow-2xl backdrop-blur md:w-[24rem] md:self-auto">
             <CardHeader className="border-b border-border/70">
               <CardTitle className="text-base">Paste messy list</CardTitle>
             </CardHeader>
@@ -1271,7 +1314,7 @@ ${tasks
                 value={bulkDraft}
                 onChange={(event) => setBulkDraft(event.target.value)}
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button variant="outline" onClick={closeFloatingPanels}>Close</Button>
                 <Button variant="secondary" onClick={() => void importBrainDump()} disabled={isRunningAi}>
                   {isRunningAi ? <LoaderCircle className="animate-spin" /> : <FileDown />}
@@ -1283,7 +1326,7 @@ ${tasks
         ) : null}
 
         {showRefocus ? (
-          <Card className="w-[24rem] border border-border/80 bg-card/95 shadow-2xl backdrop-blur">
+          <Card className="w-full max-w-[26rem] self-center border border-border/80 bg-card/95 shadow-2xl backdrop-blur md:w-[24rem] md:self-auto">
             <CardHeader className="border-b border-border/70">
               <CardTitle className="text-base">Refocus</CardTitle>
               <CardDescription>
@@ -1292,11 +1335,12 @@ ${tasks
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
               <Input
+                className="text-sm md:text-sm"
                 placeholder='I have 20 minutes, low energy, and I’m at home.'
                 value={focusPrompt}
                 onChange={(event) => setFocusPrompt(event.target.value)}
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button variant="outline" onClick={closeFloatingPanels}>Close</Button>
                 <Button variant="secondary" onClick={() => void runRefocus("refocus")} disabled={isRunningAi}>
                   {isRunningAi ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
@@ -1308,7 +1352,7 @@ ${tasks
         ) : null}
 
         {showAiSettings ? (
-          <Card className="w-[26rem] max-h-[78vh] overflow-y-auto border border-border/80 bg-card/95 shadow-2xl backdrop-blur">
+          <Card className="w-full max-w-[26rem] self-center max-h-[72vh] overflow-y-auto border border-border/80 bg-card/95 shadow-2xl backdrop-blur md:max-h-[78vh] md:self-auto">
             <CardHeader className="border-b border-border/70">
               <CardTitle className="text-base">AI settings</CardTitle>
               <CardDescription>Set up one model source and keep the rest hidden.</CardDescription>
@@ -1642,11 +1686,11 @@ ${tasks
           </Card>
         ) : null}
 
-        <div className="flex items-center gap-3">
+        <div className="flex justify-center gap-3 md:justify-end">
           <Button
             size="icon-lg"
             variant={showAiSettings ? "secondary" : "default"}
-            className="size-14 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary"
+            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
             onClick={() => {
               const next = !showAiSettings
               closeFloatingPanels()
@@ -1659,7 +1703,7 @@ ${tasks
           <Button
             size="icon-lg"
             variant={showFocusMenu ? "secondary" : "default"}
-            className="size-14 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary"
+            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
             onClick={() => {
               const next = !showFocusMenu
               closeFloatingPanels()
@@ -1672,7 +1716,7 @@ ${tasks
           <Button
             size="icon-lg"
             variant={showCaptureMenu ? "secondary" : "default"}
-            className="size-14 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary"
+            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
             onClick={() => {
               const next = !showCaptureMenu
               closeFloatingPanels()

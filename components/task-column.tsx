@@ -361,7 +361,7 @@ export default function TaskColumn({
       className={cn(
         "border border-border/80 bg-card/80 backdrop-blur",
         isNow &&
-          "relative overflow-hidden rounded-[34px] border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(255,255,255,0.64))] shadow-[0_24px_64px_rgba(15,23,42,0.09),0_1px_0_rgba(255,255,255,0.95)_inset] backdrop-blur-2xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(28,28,32,0.86),rgba(22,22,26,0.74))] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.04)_inset]",
+          "relative overflow-hidden rounded-[28px] border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(255,255,255,0.64))] shadow-[0_24px_64px_rgba(15,23,42,0.09),0_1px_0_rgba(255,255,255,0.95)_inset] backdrop-blur-2xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(28,28,32,0.86),rgba(22,22,26,0.74))] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.04)_inset] md:rounded-[34px]",
         isNow && isFullscreen &&
           "flex h-full flex-col rounded-[2.8rem] border-white/92 bg-[linear-gradient(180deg,rgba(255,255,255,0.998),rgba(255,255,255,0.988))] shadow-[0_40px_140px_rgba(15,23,42,0.18),0_1px_0_rgba(255,255,255,0.995)_inset] backdrop-blur-[42px] dark:border-white/12 dark:bg-[linear-gradient(180deg,rgba(20,20,24,0.99),rgba(16,16,20,0.985))] dark:shadow-[0_42px_140px_rgba(0,0,0,0.5),0_1px_0_rgba(255,255,255,0.04)_inset]"
       )}
@@ -378,7 +378,7 @@ export default function TaskColumn({
           className="pointer-events-none absolute inset-x-8 top-0 h-px bg-white/80 dark:bg-white/10"
         />
       ) : null}
-      <CardHeader className={cn("space-y-3 border-b border-border/70", isNow && "border-b-white/40 pb-7 pt-6 dark:border-b-white/8", isNow && isFullscreen && "px-8 pb-8 pt-8 md:px-12 md:pb-10 md:pt-10")}>
+      <CardHeader className={cn("space-y-3 border-b border-border/70", isNow && "border-b-white/40 px-5 pb-6 pt-5 dark:border-b-white/8 md:px-6 md:pb-7 md:pt-6", isNow && isFullscreen && "px-6 pb-7 pt-7 md:px-12 md:pb-10 md:pt-10")}>
         <div className="flex items-center gap-2">
           <span className={cn("h-3 w-3 rounded-full", config.dotClassName, isNow && "h-3.5 w-3.5 shadow-[0_0_24px_rgba(244,63,94,0.38)]")} />
           <CardTitle className={cn("text-sm font-bold tracking-[0.24em]", isNow && "text-base tracking-[0.3em]")}>
@@ -402,13 +402,13 @@ export default function TaskColumn({
           </div>
         </div>
         <div className="space-y-1">
-          <p className={cn("text-sm font-medium", isNow && "text-xl font-semibold tracking-tight", isNow && isFullscreen && "text-[2.2rem] md:text-[2.8rem] md:leading-[1.02]")}>{config.title}</p>
-          <CardDescription className={cn(isNow && "max-w-2xl text-base text-foreground/65", isNow && isFullscreen && "max-w-3xl text-lg md:text-xl")}>
+          <p className={cn("text-sm font-medium", isNow && "text-lg font-semibold tracking-tight sm:text-xl", isNow && isFullscreen && "text-[1.8rem] sm:text-[2rem] md:text-[2.8rem] md:leading-[1.02]")}>{config.title}</p>
+          <CardDescription className={cn(isNow && "max-w-2xl text-sm text-foreground/65 sm:text-base", isNow && isFullscreen && "max-w-3xl text-base md:text-xl")}>
             {config.description}
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className={cn("pt-5", isNow && "pt-6", isNow && isFullscreen && "flex-1 overflow-y-auto px-8 pt-8 pb-8 md:px-12 md:pt-10")}>
+      <CardContent className={cn("pt-5", isNow && "px-5 pt-5 md:px-6 md:pt-6", isNow && isFullscreen && "flex-1 overflow-y-auto px-6 pt-7 pb-7 md:px-12 md:pt-10")}>
         {tasks.length > 0 ? (
           <ul className={cn("space-y-3", isNow && "space-y-5")}>
             {tasks.map((task) => (

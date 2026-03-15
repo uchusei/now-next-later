@@ -48,7 +48,7 @@ export function ThemeToggle() {
   const tooltipAnchor = ["16.666%", "50%", "83.333%"][visibleIndex] ?? "50%"
 
   return (
-    <div className="relative w-[13.5rem]">
+    <div className="relative w-[10.5rem] sm:w-[12rem] md:w-[13.5rem]">
       <div className="relative grid grid-cols-3 rounded-[1.35rem] bg-black p-2 text-white shadow-[0_12px_32px_rgba(0,0,0,0.26)] ring-1 ring-white/10">
         {localizedOptions.map((option) => {
           const isActive = activeTheme === option.value
@@ -63,18 +63,18 @@ export function ThemeToggle() {
               onFocus={() => setFocused(option.value)}
               onBlur={() => setFocused(null)}
               className={cn(
-                "relative z-10 flex h-10 items-center justify-center rounded-[0.95rem] transition-all duration-200",
+                "relative z-10 flex h-9 items-center justify-center rounded-[0.95rem] transition-all duration-200 sm:h-10",
                 isActive ? "bg-white/16 text-white" : "text-white/86 hover:bg-white/8"
               )}
               aria-label={option.label}
               aria-pressed={isActive}
             >
               {option.value === "dark" ? (
-                <Moon className="size-5" />
+                <Moon className="size-4.5 sm:size-5" />
               ) : option.value === "light" ? (
-                <Sun className="size-5" />
+                <Sun className="size-4.5 sm:size-5" />
               ) : (
-                <Laptop className="size-5" />
+                <Laptop className="size-4.5 sm:size-5" />
               )}
             </button>
           )

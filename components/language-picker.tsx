@@ -34,15 +34,15 @@ export function LanguagePicker() {
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-black text-white shadow-[0_12px_32px_rgba(0,0,0,0.26)] ring-1 ring-white/10 transition-all hover:bg-black/95"
+        className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-black text-white shadow-[0_12px_32px_rgba(0,0,0,0.26)] ring-1 ring-white/10 transition-all hover:bg-black/95 sm:h-14 sm:w-14 sm:rounded-[1.35rem]"
         aria-label={t.language.label}
         aria-expanded={open}
       >
-        <Globe className="size-5" />
+        <Globe className="size-4.5 sm:size-5" />
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-44 rounded-[1rem] bg-[#ece8e2] p-2 text-black shadow-[0_12px_26px_rgba(0,0,0,0.18)] ring-1 ring-black/8">
+        <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-40 rounded-[1rem] bg-[#ece8e2] p-2 text-black shadow-[0_12px_26px_rgba(0,0,0,0.18)] ring-1 ring-black/8 sm:w-44">
           {options.map((option) => {
             const active = language === option.value
             const label = option.value === "en" ? t.language.english : t.language.swedish

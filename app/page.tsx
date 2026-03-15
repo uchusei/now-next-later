@@ -9,9 +9,9 @@ export default function Home() {
   const t = useCopy()
 
   return (
-    <main className="relative min-h-screen bg-background px-6 py-5 text-foreground md:px-10">
-      <div className="pointer-events-none fixed right-6 top-5 z-50 md:right-10">
-        <div className="pointer-events-auto flex items-start gap-3">
+    <main className="relative min-h-screen bg-background px-4 py-5 text-foreground md:px-10">
+      <div className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2 md:left-auto md:right-10 md:top-5 md:translate-x-0">
+        <div className="pointer-events-auto flex items-start gap-2 md:gap-3">
           <ThemeToggle />
           <LanguagePicker />
         </div>
@@ -20,15 +20,15 @@ export default function Home() {
         <ThemeToggle />
         <LanguagePicker />
       </div>
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 py-2">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 py-20 md:py-2">
         <section className="max-w-3xl text-center">
           <p className="text-sm font-medium uppercase tracking-[0.28em] text-muted-foreground">
             {t.hero.eyebrow}
           </p>
-          <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight md:text-6xl">
+          <h1 className="mt-2 text-balance text-[3rem] font-semibold tracking-tight sm:text-[3.4rem] md:text-6xl">
             {t.hero.title}
           </h1>
-          <p className="mt-2 text-pretty text-base text-muted-foreground md:text-lg">
+          <p className="mt-2 text-pretty text-base leading-8 text-muted-foreground md:text-lg">
             {t.hero.description}
           </p>
         </section>
