@@ -119,6 +119,13 @@ const browserPsSchema = z.object({
   models: z.array(z.object({ name: z.string() })).optional(),
 })
 
+interface BrowserConnectHelp {
+  title: string
+  body: string
+  command: string
+  followUp: string
+}
+
 const defaultAiStatus: AiStatus = {
   reachable: false,
   installed: false,
@@ -182,6 +189,17 @@ async function requestBrowserOllamaJson<T>(pathname: string, init?: RequestInit)
   return (await response.json()) as T
 }
 
+function buildBrowserConnectHelp(origin: string): BrowserConnectHelp {
+  return {
+    title: "This site is blocked from reaching your local Ollama.",
+    body:
+      "Your browser can see this website, but Ollama has not allowed this website to talk to the local Ollama app yet.",
+    command: `launchctl setenv OLLAMA_ORIGINS "http://localhost:3000,http://127.0.0.1:3000,${origin}"`,
+    followUp:
+      "Copy the command below, run it in the Terminal app, fully quit Ollama, open Ollama again, then press Try again.",
+  }
+}
+
 export default function FocusBoard() {
   const t = useCopy()
   const [tasks, setTasks] = useState<Task[]>([])
@@ -201,7 +219,7 @@ export default function FocusBoard() {
   const [isRunningAi, setIsRunningAi] = useState(false)
   const [isCleaningStorage, setIsCleaningStorage] = useState(false)
   const [showStorageInstructions, setShowStorageInstructions] = useState(false)
-  const [copiedAction, setCopiedAction] = useState<"signin" | "model" | null>(null)
+  const [copiedAction, setCopiedAction] = useState<"signin" | "model" | "fix" | null>(null)
   const [aiModelTab, setAiModelTab] = useState<"local" | "cloud">("local")
   const [localInstallModel, setLocalInstallModel] = useState("llama3.2:3b")
   const [isHydrated, setIsHydrated] = useState(false)
@@ -219,6 +237,7 @@ export default function FocusBoard() {
   const [browserAiStatus, setBrowserAiStatus] = useState<AiStatus>(defaultAiStatus)
   const [browserOllamaConnected, setBrowserOllamaConnected] = useState(false)
   const [isConnectingBrowserOllama, setIsConnectingBrowserOllama] = useState(false)
+  const [browserConnectHelp, setBrowserConnectHelp] = useState<BrowserConnectHelp | null>(null)
   const hasSavedRef = useRef(false)
 
   useEffect(() => {
@@ -386,6 +405,7 @@ export default function FocusBoard() {
   const connectBrowserOllama = async () => {
     setIsConnectingBrowserOllama(true)
     setError("")
+    setBrowserConnectHelp(null)
 
     try {
       const tags = browserTagsSchema.parse(await requestBrowserOllamaJson("/api/tags"))
@@ -424,12 +444,16 @@ export default function FocusBoard() {
 
       setBrowserAiStatus(status)
       setBrowserOllamaConnected(true)
+      setBrowserConnectHelp(null)
       if (!selectedModel) {
         setSelectedModel(status.selectedModel)
       }
       setActionMessage("Connected to local Ollama through this browser.")
     } catch {
-      setError("Could not connect to local Ollama from this browser. Ollama may not allow this site yet.")
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : "https://now-next-later.netlify.app"
+      setBrowserConnectHelp(buildBrowserConnectHelp(origin))
+      setError("Could not connect to local Ollama from this browser.")
     } finally {
       setIsConnectingBrowserOllama(false)
     }
@@ -832,7 +856,7 @@ ${tasks
     setTasks((current) => current.filter((task) => task.completedAt === null))
   }
 
-  const copyCommand = async (value: string, type: "signin" | "model") => {
+  const copyCommand = async (value: string, type: "signin" | "model" | "fix") => {
     try {
       await navigator.clipboard.writeText(value)
       setCopiedAction(type)
@@ -1342,14 +1366,51 @@ ${tasks
                   Pick one local or cloud model. If nothing is ready, the app falls back to built-in focus logic.
                 </p>
                 {isHostedDeployment && !browserOllamaConnected ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => void connectBrowserOllama()} disabled={isConnectingBrowserOllama}>
-                      {isConnectingBrowserOllama ? <LoaderCircle className="animate-spin" /> : null}
-                      Connect local Ollama on this device
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Only needed on the deployed app. This tries your browser&apos;s own `localhost:11434`.
-                    </p>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => void connectBrowserOllama()} disabled={isConnectingBrowserOllama}>
+                        {isConnectingBrowserOllama ? <LoaderCircle className="animate-spin" /> : null}
+                        Connect local Ollama on this device
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Only needed on the deployed app. This tries your browser&apos;s own `localhost:11434`.
+                      </p>
+                    </div>
+                    {browserConnectHelp ? (
+                      <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+                        <div className="flex items-start gap-2">
+                          <TriangleAlert className="mt-0.5 size-4 text-amber-700 dark:text-amber-300" />
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                              {browserConnectHelp.title}
+                            </p>
+                            <p className="text-xs text-amber-800/90 dark:text-amber-100/80">
+                              {browserConnectHelp.body}
+                            </p>
+                            <p className="text-xs text-amber-800/90 dark:text-amber-100/80">
+                              {browserConnectHelp.followUp}
+                            </p>
+                            <div className="rounded-xl border border-amber-200/80 bg-background/80 px-3 py-2 font-mono text-[11px] text-foreground dark:border-amber-500/20 dark:bg-background/40">
+                              {browserConnectHelp.command}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={copiedAction === "fix" ? "motion-success" : undefined}
+                                onClick={() => void copyCommand(browserConnectHelp.command, "fix")}
+                              >
+                                {copiedAction === "fix" ? "Copied fix command" : "Copy fix command"}
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => void connectBrowserOllama()} disabled={isConnectingBrowserOllama}>
+                                {isConnectingBrowserOllama ? <LoaderCircle className="animate-spin" /> : null}
+                                Try again
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 <div className="space-y-2">
