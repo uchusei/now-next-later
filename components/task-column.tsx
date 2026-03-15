@@ -134,7 +134,10 @@ function TaskItem({
       className={cn(
         "rounded-2xl border border-border/80 bg-background/85 p-4 shadow-sm",
         status === "now" &&
-          "rounded-[28px] border-white/65 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.78))] p-5 shadow-[0_12px_34px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(36,36,40,0.88),rgba(28,28,32,0.76))] dark:shadow-[0_14px_32px_rgba(0,0,0,0.24),0_1px_0_rgba(255,255,255,0.03)_inset]"
+          "rounded-[28px] border-white/65 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.78))] p-5 shadow-[0_12px_34px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(36,36,40,0.88),rgba(28,28,32,0.76))] dark:shadow-[0_14px_32px_rgba(0,0,0,0.24),0_1px_0_rgba(255,255,255,0.03)_inset]",
+        status === "now" &&
+          isFullscreen &&
+          "flex h-full flex-col rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-0"
       )}
     >
       {isEditing ? (
@@ -175,7 +178,7 @@ function TaskItem({
                 className={cn(
                   "text-base font-medium leading-6",
                   status === "now" && "text-[1.7rem] leading-[1.12] font-semibold tracking-tight",
-                  status === "now" && isFullscreen && "text-[2.7rem] leading-[0.96] md:text-[3rem]"
+                  status === "now" && isFullscreen && "text-[1.45rem] leading-[1.02] sm:text-[2rem] md:text-[2.4rem] lg:text-[2.75rem]"
                 )}
               >
                 {task.title}
@@ -184,7 +187,7 @@ function TaskItem({
                 className={cn(
                   "text-sm text-muted-foreground",
                   status === "now" && "text-[0.95rem]",
-                  status === "now" && isFullscreen && "text-base md:text-lg"
+                  status === "now" && isFullscreen && "hidden text-base md:block md:text-lg"
                 )}
               >
                 {task.reason}
@@ -209,7 +212,7 @@ function TaskItem({
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className={cn("space-y-3", status === "now" && isFullscreen && "mt-2 md:mt-4")}>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline">{metaLabel.dueBucket[task.dueBucket]}</Badge>
               <Badge variant="outline">{metaLabel.effort[task.effort]}</Badge>
@@ -290,7 +293,14 @@ function TaskItem({
             ) : null}
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div
+            className={cn(
+              "flex flex-wrap gap-2",
+              status === "now" &&
+                isFullscreen &&
+                "sticky bottom-0 mt-auto -mx-2 border-t border-border/60 bg-background/92 px-2 pt-3 pb-1 backdrop-blur-xl md:mx-0 md:border-0 md:bg-transparent md:px-0 md:pt-6 md:pb-0"
+            )}
+          >
             {status !== "now" ? (
               <Button size="sm" variant="secondary" onClick={() => onStartNow(task.id)}>
                 <Play />
@@ -378,7 +388,7 @@ export default function TaskColumn({
           className="pointer-events-none absolute inset-x-8 top-0 h-px bg-white/80 dark:bg-white/10"
         />
       ) : null}
-      <CardHeader className={cn("space-y-3 border-b border-border/70", isNow && "border-b-white/40 px-5 pb-6 pt-5 dark:border-b-white/8 md:px-6 md:pb-7 md:pt-6", isNow && isFullscreen && "px-6 pb-7 pt-7 md:px-12 md:pb-10 md:pt-10")}>
+      <CardHeader className={cn("space-y-3 border-b border-border/70", isNow && "border-b-white/40 px-5 pb-6 pt-5 dark:border-b-white/8 md:px-6 md:pb-7 md:pt-6", isNow && isFullscreen && "px-5 pb-5 pt-5 md:px-12 md:pb-10 md:pt-10")}>
         <div className="flex items-center gap-2">
           <span className={cn("h-3 w-3 rounded-full", config.dotClassName, isNow && "h-3.5 w-3.5 shadow-[0_0_24px_rgba(244,63,94,0.38)]")} />
           <CardTitle className={cn("text-sm font-bold tracking-[0.24em]", isNow && "text-base tracking-[0.3em]")}>
@@ -401,16 +411,16 @@ export default function TaskColumn({
             <Badge variant="outline">{tasks.length}</Badge>
           </div>
         </div>
-        <div className="space-y-1">
+        <div className={cn("space-y-1", isNow && isFullscreen && "hidden")}>
           <p className={cn("text-sm font-medium", isNow && "text-lg font-semibold tracking-tight sm:text-xl", isNow && isFullscreen && "text-[1.8rem] sm:text-[2rem] md:text-[2.8rem] md:leading-[1.02]")}>{config.title}</p>
           <CardDescription className={cn(isNow && "max-w-2xl text-sm text-foreground/65 sm:text-base", isNow && isFullscreen && "max-w-3xl text-base md:text-xl")}>
             {config.description}
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className={cn("pt-5", isNow && "px-5 pt-5 md:px-6 md:pt-6", isNow && isFullscreen && "flex-1 overflow-y-auto px-6 pt-7 pb-7 md:px-12 md:pt-10")}>
+      <CardContent className={cn("pt-5", isNow && "px-5 pt-5 md:px-6 md:pt-6", isNow && isFullscreen && "flex-1 overflow-y-auto px-5 pt-5 pb-24 md:px-12 md:pt-8 md:pb-8")}>
         {tasks.length > 0 ? (
-          <ul className={cn("space-y-3", isNow && "space-y-5")}>
+          <ul className={cn("space-y-3", isNow && "space-y-5", isNow && isFullscreen && "h-full")}>
             {tasks.map((task) => (
               <TaskItem
                 key={task.id}

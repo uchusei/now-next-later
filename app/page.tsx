@@ -1,5 +1,6 @@
 "use client"
 
+import { BrandWordmark } from "@/components/brand-wordmark"
 import FocusBoard from "@/components/focus-board"
 import { useCopy } from "@/components/language-provider"
 import { LanguagePicker } from "@/components/language-picker"
@@ -21,14 +22,17 @@ export default function Home() {
         <LanguagePicker />
       </div>
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 py-20 md:py-2">
-        <section className="max-w-3xl text-center">
+        <section className="w-full max-w-5xl text-center">
           <p className="text-sm font-medium uppercase tracking-[0.28em] text-muted-foreground">
             {t.hero.eyebrow}
           </p>
-          <h1 className="mt-2 text-balance text-[3rem] font-semibold tracking-tight sm:text-[3.4rem] md:text-6xl">
+          <h1 className="sr-only">
             {t.hero.title}
           </h1>
-          <p className="mt-2 text-pretty text-base leading-8 text-muted-foreground md:text-lg">
+          <div className="mt-4 mb-3 flex justify-center md:mt-5 md:mb-2">
+            <BrandWordmark className="max-w-[18rem] sm:max-w-[30rem] md:max-w-[60rem]" />
+          </div>
+          <p className="mx-auto mt-2 mb-5 max-w-3xl text-pretty text-base leading-[1.6] text-muted-foreground md:mt-3 md:mb-0 md:text-lg md:leading-[1.55]">
             {t.hero.description}
           </p>
         </section>
@@ -44,7 +48,7 @@ export default function Home() {
             >
               uchusei
             </a>
-            {" "}under{" "}
+            {" "}/{" "}
             <a
               className="underline underline-offset-4 transition-colors hover:text-foreground"
               href="https://wowen.se"
