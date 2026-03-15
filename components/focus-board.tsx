@@ -230,6 +230,7 @@ export default function FocusBoard() {
   const [showAvoidance, setShowAvoidance] = useState(false)
   const [showMomentum, setShowMomentum] = useState(false)
   const [showAiSettings, setShowAiSettings] = useState(false)
+  const [showOverview, setShowOverview] = useState(false)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [showCaptureMenu, setShowCaptureMenu] = useState(false)
   const [showFocusMenu, setShowFocusMenu] = useState(false)
@@ -923,6 +924,7 @@ ${tasks
 
   const closeFloatingPanels = () => {
     closeFloatingMenus()
+    setShowOverview(false)
     setShowQuickAdd(false)
     setShowBrainDump(false)
     setShowRefocus(false)
@@ -937,6 +939,15 @@ ${tasks
     if (panel === "refocus") setShowRefocus(true)
     if (panel === "ai") setShowAiSettings(true)
   }
+
+  const hasFloatingOverlayOpen =
+    showCaptureMenu ||
+    showFocusMenu ||
+    showOverview ||
+    showQuickAdd ||
+    showBrainDump ||
+    showRefocus ||
+    showAiSettings
 
   return (
     <div className="w-full max-w-6xl space-y-6 pb-44 md:pb-28">
@@ -979,7 +990,7 @@ ${tasks
       <div
         className={cn(
           "space-y-6",
-          showNowFullscreen && "hidden"
+          showNowFullscreen && "pointer-events-none select-none blur-[18px] saturate-[0.88] opacity-35"
         )}
         aria-hidden={showNowFullscreen}
       >
@@ -1162,7 +1173,7 @@ ${tasks
           <button
             type="button"
             aria-label="Close focus mode"
-            className="absolute inset-0 bg-background/96 backdrop-blur-[44px] dark:bg-background/92"
+            className="absolute inset-0 bg-background/68 backdrop-blur-[28px] dark:bg-background/72"
             onClick={() => setShowNowFullscreen(false)}
           />
           <div className="absolute inset-x-3 top-22 bottom-3 md:inset-x-6 md:top-24 md:bottom-6">
@@ -1184,6 +1195,15 @@ ${tasks
             </div>
           </div>
         </div>
+      ) : null}
+
+      {hasFloatingOverlayOpen ? (
+        <button
+          type="button"
+          aria-label="Close floating panels"
+          className="fixed inset-0 z-40 bg-background/55 backdrop-blur-[20px] dark:bg-background/60"
+          onClick={closeFloatingPanels}
+        />
       ) : null}
 
       <div className="fixed inset-x-4 bottom-4 z-50 flex flex-col items-stretch gap-3 md:inset-x-auto md:right-10 md:bottom-6 md:items-end">
@@ -1688,7 +1708,140 @@ ${tasks
           </Card>
         ) : null}
 
+        {showOverview ? (
+          <Card className="w-full max-w-[26rem] self-center max-h-[72vh] overflow-y-auto border border-border/80 bg-card/95 shadow-2xl backdrop-blur md:w-[30rem] md:max-h-[78vh] md:self-auto">
+            <CardHeader className="border-b border-border/70">
+              <CardTitle className="text-base">{t.focusBoard.overviewTitle}</CardTitle>
+              <CardDescription>{t.focusBoard.overviewDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-4">
+              {rankedTasks.length === 0 && completedTasks.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border bg-muted/35 p-5">
+                  <p className="text-sm font-medium">{t.focusBoard.overviewEmpty}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t.focusBoard.overviewEmptyDesc}</p>
+                </div>
+              ) : (
+                <>
+                  <section className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                      <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                        {t.focusBoard.overviewNow}
+                      </p>
+                      <Badge variant="outline">{nowTasks.length}</Badge>
+                    </div>
+                    <div className="rounded-[1.4rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(255,255,255,0.64))] p-3 shadow-[0_18px_44px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(28,28,32,0.86),rgba(22,22,26,0.74))]">
+                      {nowTasks.length > 0 ? (
+                        <ul className="space-y-2">
+                          {nowTasks.map((task) => (
+                            <li key={task.id} className="rounded-xl border border-border/70 bg-background/85 px-3 py-2.5">
+                              <p className="text-base font-semibold tracking-tight">{task.title}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">{task.reason}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{t.taskColumn.now.emptyTitle}</p>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                      <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                        {t.focusBoard.overviewNext}
+                      </p>
+                      <Badge variant="outline">{nextTasks.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {nextTasks.length > 0 ? (
+                        nextTasks.map((task) => (
+                          <div key={task.id} className="rounded-2xl border border-border/70 bg-background/85 px-3 py-3">
+                            <p className="text-sm font-medium">{task.title}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{task.reason}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-border bg-muted/25 px-3 py-3 text-sm text-muted-foreground">
+                          {t.taskColumn.next.emptyTitle}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-sky-400" />
+                      <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                        {t.focusBoard.overviewNotNow}
+                      </p>
+                      <Badge variant="outline">{notNowTasks.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {notNowTasks.length > 0 ? (
+                        notNowTasks.map((task) => (
+                          <div key={task.id} className="rounded-2xl border border-border/70 bg-background/85 px-3 py-3">
+                            <p className="text-sm font-medium">{task.title}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-border bg-muted/25 px-3 py-3 text-sm text-muted-foreground">
+                          {t.taskColumn.notNow.emptyTitle}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                      <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                        {t.focusBoard.overviewDone}
+                      </p>
+                      <Badge variant="outline">{completedTasks.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {completedTasks.length > 0 ? (
+                        completedTasks.map((task) => (
+                          <div key={task.id} className="rounded-2xl border border-border/70 bg-background/85 px-3 py-3">
+                            <p className="text-sm font-medium">{task.title}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {t.focusBoard.doneOn} {formatCompletedAt(task.completedAt)}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-border bg-muted/25 px-3 py-3 text-sm text-muted-foreground">
+                          {t.focusBoard.noDone}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </>
+              )}
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={closeFloatingPanels}>Close</Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
         <div className="flex justify-center gap-3 md:justify-end">
+          <Button
+            size="icon-lg"
+            variant={showOverview ? "secondary" : "default"}
+            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
+            onClick={() => {
+              const next = !showOverview
+              closeFloatingPanels()
+              setShowOverview(next)
+            }}
+            aria-label="Open task overview"
+          >
+            <ListTodo />
+          </Button>
           <Button
             size="icon-lg"
             variant={showAiSettings ? "secondary" : "default"}

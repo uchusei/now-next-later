@@ -373,10 +373,10 @@ export default function TaskColumn({
         isNow &&
           "relative overflow-hidden rounded-[28px] border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(255,255,255,0.64))] shadow-[0_24px_64px_rgba(15,23,42,0.09),0_1px_0_rgba(255,255,255,0.95)_inset] backdrop-blur-2xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(28,28,32,0.86),rgba(22,22,26,0.74))] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.04)_inset] md:rounded-[34px]",
         isNow && isFullscreen &&
-          "flex h-full flex-col rounded-[2.8rem] border-white/92 bg-[linear-gradient(180deg,rgba(255,255,255,0.998),rgba(255,255,255,0.988))] shadow-[0_40px_140px_rgba(15,23,42,0.18),0_1px_0_rgba(255,255,255,0.995)_inset] backdrop-blur-[42px] dark:border-white/12 dark:bg-[linear-gradient(180deg,rgba(20,20,24,0.99),rgba(16,16,20,0.985))] dark:shadow-[0_42px_140px_rgba(0,0,0,0.5),0_1px_0_rgba(255,255,255,0.04)_inset]"
+          "flex h-full flex-col rounded-[2.8rem] border-white/92 bg-white/99 shadow-[0_40px_140px_rgba(15,23,42,0.18),0_1px_0_rgba(255,255,255,0.995)_inset] backdrop-blur-[42px] dark:border-white/10 dark:bg-[#17171b] dark:shadow-[0_42px_140px_rgba(0,0,0,0.42)]"
       )}
     >
-      {isNow ? (
+      {isNow && !isFullscreen ? (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-14 -top-10 h-20 rounded-full bg-white/70 blur-3xl dark:bg-white/6"

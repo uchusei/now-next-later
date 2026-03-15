@@ -57,7 +57,9 @@ export default function Home() {
             >
               WOWEN
             </a>
-            . The source code is available on{" "}
+            . 
+            <br /> 
+            The source code is available on{" "}
             <a
               className="underline underline-offset-4 transition-colors hover:text-foreground"
               href="https://github.com/uchusei/now-next-later"
