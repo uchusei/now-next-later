@@ -904,7 +904,7 @@ ${tasks
       <div
         className={cn(
           "space-y-6",
-          showNowFullscreen && "pointer-events-none select-none opacity-0"
+          showNowFullscreen && "hidden"
         )}
         aria-hidden={showNowFullscreen}
       >
@@ -1090,22 +1090,15 @@ ${tasks
       </div>
 
       {showNowFullscreen ? (
-        <div className="fixed inset-0 z-30">
+        <div className="fixed inset-0 z-40">
           <button
             type="button"
             aria-label="Close focus mode"
-            className="absolute inset-0 bg-background/98 backdrop-blur-[64px]"
+            className="absolute inset-0 bg-background/96 backdrop-blur-[44px] dark:bg-background/92"
             onClick={() => setShowNowFullscreen(false)}
           />
           <div className="absolute inset-x-3 top-22 bottom-3 md:inset-x-6 md:top-24 md:bottom-6">
             <div className="relative mx-auto h-full w-full max-w-6xl">
-              {nextTasks.length > 0 ? (
-                <>
-                  <div className="pointer-events-none absolute inset-x-5 top-5 bottom-0 rounded-[2.8rem] border border-white/24 bg-white/16 shadow-[0_32px_72px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/8 dark:bg-white/[0.03]" />
-                  <div className="pointer-events-none absolute inset-x-10 top-10 bottom-0 rounded-[2.8rem] border border-white/18 bg-white/10 shadow-[0_24px_52px_rgba(15,23,42,0.05)] backdrop-blur-xl dark:border-white/6 dark:bg-white/[0.02]" />
-                </>
-              ) : null}
-
               <div className="relative z-10 h-full">
                 <TaskColumn
                   status="now"
@@ -1125,7 +1118,7 @@ ${tasks
         </div>
       ) : null}
 
-      <div className="fixed right-6 bottom-6 z-30 flex flex-col items-end gap-3 md:right-10">
+      <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end gap-3 md:right-10">
         {showCaptureMenu ? (
           <Card className="w-[18rem] border border-border/80 bg-card/95 shadow-2xl backdrop-blur">
             <CardContent className="space-y-2 pt-4">
