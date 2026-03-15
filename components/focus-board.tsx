@@ -950,14 +950,7 @@ ${tasks
                 : "border-emerald-200/80 bg-[linear-gradient(180deg,rgba(240,253,247,0.96),rgba(229,251,241,0.92))] dark:border-emerald-500/20 dark:bg-[linear-gradient(180deg,rgba(14,58,44,0.82),rgba(11,44,35,0.72))]"
             )}
           >
-            <CardContent className="flex items-start gap-3 px-4 py-3.5">
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "mt-1 h-2.5 w-2.5 shrink-0 rounded-full shadow-[0_0_18px_currentColor]",
-                  error ? "bg-rose-500 text-rose-500" : "bg-emerald-500 text-emerald-500"
-                )}
-              />
+            <CardContent className="flex items-center gap-3 px-5 py-3.5">
               <div className="min-w-0 flex-1">
                 {error ? (
                   <p className="text-sm font-medium leading-6 text-rose-700 dark:text-rose-100">{error}</p>
