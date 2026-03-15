@@ -1,3 +1,5 @@
+![Now / Next / Later promo](./public/now-next-later-readme-promo.png)
+
 # Now / Next / Later
 
 A focus-first task app for people who get overwhelmed by long lists and typical reminder or task managers. For many people, especially with ADHD (like myself), the hard part is not storing tasks. It is deciding what matters now when everything feels equally loud.
@@ -121,4 +123,3 @@ In other words:
 - [next-themes](https://github.com/pacocoursey/next-themes)
 - [Zod](https://zod.dev/)
 - [Lucide](https://lucide.dev/)
-
