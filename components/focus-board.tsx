@@ -532,6 +532,7 @@ export default function FocusBoard() {
     setQuickDueBucket("soon")
     setError("")
     clearFocusOverlay()
+    setActionMessage("Task added to inbox.")
   }
 
   const importBrainDump = async () => {
@@ -619,6 +620,7 @@ ${bulkDraft}
 
       setBulkDraft("")
       clearFocusOverlay()
+      setActionMessage("Tasks imported into inbox.")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not import with AI.")
     } finally {
