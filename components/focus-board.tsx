@@ -939,28 +939,35 @@ ${tasks
   return (
     <div className="w-full max-w-6xl space-y-6 pb-44 md:pb-28">
       {(error || actionMessage) ? (
-        <div className="pointer-events-none fixed inset-x-4 bottom-24 z-50 flex justify-center md:inset-x-auto md:right-10 md:bottom-6">
+        <div className="pointer-events-none fixed inset-x-4 bottom-24 z-50 flex justify-center md:inset-x-0 md:bottom-8">
           <Card
             className={cn(
-              "pointer-events-auto w-full max-w-md border shadow-2xl backdrop-blur",
+              "pointer-events-auto w-full max-w-md rounded-[1.6rem] border shadow-[0_24px_60px_rgba(15,23,42,0.16)] backdrop-blur-2xl",
               error
-                ? "border-rose-200/80 bg-rose-50/95 dark:border-rose-500/20 dark:bg-rose-500/10"
-                : "border-emerald-200/80 bg-emerald-50/95 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                ? "border-rose-200/80 bg-[linear-gradient(180deg,rgba(255,245,247,0.96),rgba(255,240,243,0.92))] dark:border-rose-500/20 dark:bg-[linear-gradient(180deg,rgba(88,28,42,0.82),rgba(68,18,32,0.72))]"
+                : "border-emerald-200/80 bg-[linear-gradient(180deg,rgba(240,253,247,0.96),rgba(229,251,241,0.92))] dark:border-emerald-500/20 dark:bg-[linear-gradient(180deg,rgba(14,58,44,0.82),rgba(11,44,35,0.72))]"
             )}
           >
-            <CardContent className="flex items-start gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1 text-center md:text-left">
+            <CardContent className="flex items-start gap-3 px-4 py-3.5">
+              <div
+                aria-hidden="true"
+                className={cn(
+                  "mt-1 h-2.5 w-2.5 shrink-0 rounded-full shadow-[0_0_18px_currentColor]",
+                  error ? "bg-rose-500 text-rose-500" : "bg-emerald-500 text-emerald-500"
+                )}
+              />
+              <div className="min-w-0 flex-1">
                 {error ? (
-                  <p className="text-sm text-rose-700 dark:text-rose-100">{error}</p>
+                  <p className="text-sm font-medium leading-6 text-rose-700 dark:text-rose-100">{error}</p>
                 ) : null}
                 {actionMessage ? (
-                  <p className="text-sm text-emerald-700 dark:text-emerald-100">{actionMessage}</p>
+                  <p className="text-sm font-medium leading-6 text-emerald-700 dark:text-emerald-100">{actionMessage}</p>
                 ) : null}
               </div>
               <Button
                 size="icon-sm"
                 variant="ghost"
-                className="shrink-0 rounded-full"
+                className="shrink-0 rounded-full opacity-70 hover:opacity-100"
                 onClick={() => {
                   setError("")
                   setActionMessage("")

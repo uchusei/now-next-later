@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen bg-background px-4 py-5 text-foreground md:px-10">
       <div className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2 md:left-auto md:right-10 md:top-5 md:translate-x-0">
-        <div className="pointer-events-auto flex items-start gap-2 md:gap-3">
+        <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
           <ThemeToggle />
           <LanguagePicker />
         </div>
