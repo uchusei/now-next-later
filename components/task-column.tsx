@@ -132,12 +132,13 @@ function TaskItem({
   return (
     <li
       className={cn(
-        "rounded-2xl border border-border/80 bg-background/85 p-4 shadow-sm",
+        !isFullscreen && "rounded-2xl border border-border/80 bg-background/85 p-4 shadow-sm",
         status === "now" &&
+          !isFullscreen &&
           "rounded-[28px] border-white/65 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.78))] p-5 shadow-[0_12px_34px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(36,36,40,0.88),rgba(28,28,32,0.76))] dark:shadow-[0_14px_32px_rgba(0,0,0,0.24),0_1px_0_rgba(255,255,255,0.03)_inset]",
         status === "now" &&
           isFullscreen &&
-          "flex h-full flex-col rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-0"
+          "flex h-full flex-col rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-0 [background-image:none] dark:bg-transparent dark:[background-image:none]"
       )}
     >
       {isEditing ? (
@@ -371,9 +372,10 @@ export default function TaskColumn({
       className={cn(
         "border border-border/80 bg-card/80 backdrop-blur",
         isNow &&
+          !isFullscreen &&
           "relative overflow-hidden rounded-[28px] border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(255,255,255,0.64))] shadow-[0_24px_64px_rgba(15,23,42,0.09),0_1px_0_rgba(255,255,255,0.95)_inset] backdrop-blur-2xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(28,28,32,0.86),rgba(22,22,26,0.74))] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.04)_inset] md:rounded-[34px]",
         isNow && isFullscreen &&
-          "flex h-full flex-col rounded-[2.8rem] border-white/92 bg-white/99 shadow-[0_40px_140px_rgba(15,23,42,0.18),0_1px_0_rgba(255,255,255,0.995)_inset] backdrop-blur-[42px] dark:border-white/10 dark:bg-[#17171b] dark:shadow-[0_42px_140px_rgba(0,0,0,0.42)]"
+          "flex h-full flex-col rounded-[2.8rem] border-white/92 bg-white shadow-[0_40px_140px_rgba(15,23,42,0.18)] [background-image:none] dark:border-white/8 dark:bg-[#17171b] dark:shadow-[0_36px_120px_rgba(0,0,0,0.34)] dark:[background-image:none]"
       )}
     >
       {isNow && !isFullscreen ? (
@@ -382,7 +384,7 @@ export default function TaskColumn({
           className="pointer-events-none absolute inset-x-14 -top-10 h-20 rounded-full bg-white/70 blur-3xl dark:bg-white/6"
         />
       ) : null}
-      {isNow ? (
+      {isNow && !isFullscreen ? (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-8 top-0 h-px bg-white/80 dark:bg-white/10"

@@ -949,6 +949,18 @@ ${tasks
     showRefocus ||
     showAiSettings
 
+  useEffect(() => {
+    if (hasFloatingOverlayOpen) {
+      document.body.dataset.floatingOverlayOpen = "true"
+    } else {
+      delete document.body.dataset.floatingOverlayOpen
+    }
+
+    return () => {
+      delete document.body.dataset.floatingOverlayOpen
+    }
+  }, [hasFloatingOverlayOpen])
+
   return (
     <div className="w-full max-w-6xl space-y-6 pb-44 md:pb-28">
       {(error || actionMessage) ? (
@@ -989,7 +1001,7 @@ ${tasks
 
       <div
         className={cn(
-          "space-y-6",
+          "focusboard-shell-content space-y-6 transition-[filter,opacity] duration-200",
           showNowFullscreen && "pointer-events-none select-none blur-[18px] saturate-[0.88] opacity-35"
         )}
         aria-hidden={showNowFullscreen}
@@ -1201,7 +1213,7 @@ ${tasks
         <button
           type="button"
           aria-label="Close floating panels"
-          className="fixed inset-0 z-40 bg-background/55 backdrop-blur-[20px] dark:bg-background/60"
+          className="fixed inset-0 z-40 bg-background/46 backdrop-blur-[20px] dark:bg-background/58 dark:backdrop-blur-[22px]"
           onClick={closeFloatingPanels}
         />
       ) : null}
@@ -1829,58 +1841,58 @@ ${tasks
         ) : null}
 
         <div className="flex justify-center gap-3 md:justify-end">
-          <Button
-            size="icon-lg"
-            variant={showOverview ? "secondary" : "default"}
-            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
-            onClick={() => {
-              const next = !showOverview
-              closeFloatingPanels()
-              setShowOverview(next)
-            }}
-            aria-label="Open task overview"
-          >
-            <ListTodo />
-          </Button>
-          <Button
-            size="icon-lg"
-            variant={showAiSettings ? "secondary" : "default"}
-            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
-            onClick={() => {
-              const next = !showAiSettings
-              closeFloatingPanels()
-              setShowAiSettings(next)
-            }}
-            aria-label="Open AI settings"
-          >
-            <Brain />
-          </Button>
-          <Button
-            size="icon-lg"
-            variant={showFocusMenu ? "secondary" : "default"}
-            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
-            onClick={() => {
-              const next = !showFocusMenu
-              closeFloatingPanels()
-              setShowFocusMenu(next)
-            }}
-            aria-label="Open focus tools"
-          >
-            <SlidersHorizontal />
-          </Button>
-          <Button
-            size="icon-lg"
-            variant={showCaptureMenu ? "secondary" : "default"}
-            className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
-            onClick={() => {
-              const next = !showCaptureMenu
-              closeFloatingPanels()
-              setShowCaptureMenu(next)
-            }}
-            aria-label="Open capture menu"
-          >
-            <Plus />
-          </Button>
+            <Button
+              size="icon-lg"
+              variant={showOverview ? "secondary" : "default"}
+              className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
+              onClick={() => {
+                const next = !showOverview
+                closeFloatingPanels()
+                setShowOverview(next)
+              }}
+              aria-label="Open task overview"
+            >
+              <ListTodo />
+            </Button>
+            <Button
+              size="icon-lg"
+              variant={showAiSettings ? "secondary" : "default"}
+              className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
+              onClick={() => {
+                const next = !showAiSettings
+                closeFloatingPanels()
+                setShowAiSettings(next)
+              }}
+              aria-label="Open AI settings"
+            >
+              <Brain />
+            </Button>
+            <Button
+              size="icon-lg"
+              variant={showFocusMenu ? "secondary" : "default"}
+              className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
+              onClick={() => {
+                const next = !showFocusMenu
+                closeFloatingPanels()
+                setShowFocusMenu(next)
+              }}
+              aria-label="Open focus tools"
+            >
+              <SlidersHorizontal />
+            </Button>
+            <Button
+              size="icon-lg"
+              variant={showCaptureMenu ? "secondary" : "default"}
+              className="size-12 rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.28)] hover:bg-primary data-[variant=secondary]:hover:bg-secondary md:size-14"
+              onClick={() => {
+                const next = !showCaptureMenu
+                closeFloatingPanels()
+                setShowCaptureMenu(next)
+              }}
+              aria-label="Open capture menu"
+            >
+              <Plus />
+            </Button>
         </div>
       </div>
     </div>

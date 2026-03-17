@@ -22,7 +22,7 @@ export default function Home() {
         <LanguagePicker />
       </div>
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 py-20 md:py-2">
-        <section className="w-full max-w-5xl text-center">
+        <section className="page-static-content w-full max-w-5xl text-center transition-[filter,opacity] duration-200">
           <p className="text-sm font-medium uppercase tracking-[0.28em] text-muted-foreground">
             {t.hero.eyebrow}
           </p>
@@ -37,7 +37,7 @@ export default function Home() {
           </p>
         </section>
         <FocusBoard />
-        <footer className="w-full border-t border-border/60 pt-6 text-center text-sm text-muted-foreground">
+        <footer className="page-static-content w-full border-t border-border/60 pt-6 text-center text-sm text-muted-foreground transition-[filter,opacity] duration-200">
           <p>
             Built by{" "}
             <a
