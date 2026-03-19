@@ -164,13 +164,22 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit) {
     },
   })
 
-  const data = await response.json()
+  const text = await response.text()
+  const data = text ? safeParseJson(text) : null
 
   if (!response.ok) {
-    throw new Error((data as { error?: string }).error ?? "Request failed.")
+    throw new Error((data as { error?: string } | null)?.error ?? "Request failed.")
   }
 
   return data as T
+}
+
+function safeParseJson(value: string) {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
 }
 
 async function requestBrowserOllamaJson<T>(pathname: string, init?: RequestInit) {
@@ -818,8 +827,15 @@ ${tasks
     }
   }
 
-  const updateTask = (taskId: string, updater: (task: Task) => Task) => {
-    clearFocusOverlay()
+  const updateTask = (
+    taskId: string,
+    updater: (task: Task) => Task,
+    options?: { preserveOverlay?: boolean }
+  ) => {
+    if (!options?.preserveOverlay) {
+      clearFocusOverlay()
+    }
+
     setTasks((current) => current.map((task) => (task.id === taskId ? updater(task) : task)))
   }
 
@@ -855,7 +871,7 @@ ${tasks
 
   const handleUpdateTitle = (taskId: string, title: string) => {
     freezeCurrentLayout()
-    updateTask(taskId, (task) => ({ ...task, title }))
+    updateTask(taskId, (task) => ({ ...task, title }), { preserveOverlay: true })
   }
 
   const handleUpdateMeta = (
@@ -864,7 +880,7 @@ ${tasks
     value: Task[typeof field]
   ) => {
     freezeCurrentLayout()
-    updateTask(taskId, (task) => ({ ...task, [field]: value }))
+    updateTask(taskId, (task) => ({ ...task, [field]: value }), { preserveOverlay: true })
   }
 
   const handleClearCompleted = () => {
@@ -1185,7 +1201,7 @@ ${tasks
           <button
             type="button"
             aria-label="Close focus mode"
-            className="absolute inset-0 bg-background/68 backdrop-blur-[28px] dark:bg-background/72"
+            className="absolute inset-0 bg-background/76 backdrop-blur-[34px] dark:bg-background/84 dark:backdrop-blur-[38px]"
             onClick={() => setShowNowFullscreen(false)}
           />
           <div className="absolute inset-x-3 top-22 bottom-3 md:inset-x-6 md:top-24 md:bottom-6">
@@ -1213,7 +1229,7 @@ ${tasks
         <button
           type="button"
           aria-label="Close floating panels"
-          className="fixed inset-0 z-40 bg-background/46 backdrop-blur-[20px] dark:bg-background/58 dark:backdrop-blur-[22px]"
+          className="fixed inset-0 z-40 bg-background/56 backdrop-blur-[30px] dark:bg-background/72 dark:backdrop-blur-[34px]"
           onClick={closeFloatingPanels}
         />
       ) : null}
@@ -1441,7 +1457,9 @@ ${tasks
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Pick one local or cloud model. If nothing is ready, the app falls back to built-in focus logic.
+                  {isHostedDeployment
+                    ? "On the public app, server AI is disabled. Use built-in logic or connect local Ollama on this device."
+                    : "Pick one local or cloud model. If nothing is ready, the app falls back to built-in focus logic."}
                 </p>
                 {isHostedDeployment && !browserOllamaConnected ? (
                   <div className="space-y-3">

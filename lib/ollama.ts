@@ -123,7 +123,7 @@ export const getOllamaStatus = async () => {
     reachable: tags !== null,
     installed: tags !== null,
     selectedModel,
-    modelPath: modelRoot,
+    modelPath: "~/.ollama/models",
     storageExists,
     storageBytes,
     storageLabel: formatBytes(storageBytes),

@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { deleteModel, unloadModel } from "@/lib/ollama"
+import { createServerAiDisabledResponse, isServerAiRouteEnabled } from "@/lib/server-ai"
 
 const requestSchema = z.object({
   model: z.string().min(1),
 })
 
 export async function POST(request: NextRequest) {
+  if (!isServerAiRouteEnabled()) {
+    return createServerAiDisabledResponse()
+  }
+
   const parsed = requestSchema.safeParse(await request.json())
 
   if (!parsed.success) {
@@ -23,6 +28,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  if (!isServerAiRouteEnabled()) {
+    return createServerAiDisabledResponse()
+  }
+
   const parsed = requestSchema.safeParse(await request.json())
 
   if (!parsed.success) {

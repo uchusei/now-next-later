@@ -10,6 +10,7 @@ import {
   contextTagSchema,
 } from "@/lib/focus"
 import { ollamaGenerate } from "@/lib/ollama"
+import { createServerAiDisabledResponse, isServerAiRouteEnabled } from "@/lib/server-ai"
 
 const requestSchema = z.object({
   model: z.string().min(1),
@@ -30,6 +31,10 @@ const responseSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  if (!isServerAiRouteEnabled()) {
+    return createServerAiDisabledResponse()
+  }
+
   const parsed = requestSchema.safeParse(await request.json())
 
   if (!parsed.success) {

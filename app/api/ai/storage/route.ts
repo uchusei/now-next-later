@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { clearOllamaLogs, deleteAllLocalModels } from "@/lib/ollama"
+import { createServerAiDisabledResponse, isServerAiRouteEnabled } from "@/lib/server-ai"
 
 const requestSchema = z.object({
   action: z.enum(["deleteAllLocalModels", "clearLogs"]),
 })
 
 export async function POST(request: NextRequest) {
+  if (!isServerAiRouteEnabled()) {
+    return createServerAiDisabledResponse()
+  }
+
   const parsed = requestSchema.safeParse(await request.json())
 
   if (!parsed.success) {
