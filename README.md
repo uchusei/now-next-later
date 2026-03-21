@@ -1,4 +1,4 @@
-![Now / Next / Later promo](./public/now-next-later-readme-promo.png)
+![Now / Next / Later promo](assets/now-next-later-readme-promo.png)
 
 # Now / Next / Later
 
