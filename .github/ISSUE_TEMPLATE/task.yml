@@ -1,0 +1,17 @@
+name: Task
+description: Internal implementation or maintenance task
+title: "[Task] "
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: Task
+      placeholder: What needs to be done?
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      placeholder: Define what completion looks like
