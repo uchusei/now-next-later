@@ -59,7 +59,7 @@ export default function Home() {
             </a>
             . 
             <br /> 
-            The source code is available on{" "}
+            Version: v0.0.1{" "}
             <a
               className="underline underline-offset-4 transition-colors hover:text-foreground"
               href="https://github.com/uchusei/now-next-later"
