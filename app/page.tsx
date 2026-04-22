@@ -59,14 +59,14 @@ export default function Home() {
             </a>
             . 
             <br /> 
-            Version: v0.0.1{" "}
+            Version:{" "}
             <a
               className="underline underline-offset-4 transition-colors hover:text-foreground"
               href="https://github.com/uchusei/now-next-later"
               target="_blank"
               rel="noreferrer"
             >
-              GitHub
+              v0.0.1
             </a>
             .
           </p>
