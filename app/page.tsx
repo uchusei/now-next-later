@@ -39,6 +39,16 @@ export default function Home() {
         <FocusBoard />
         <footer className="page-static-content w-full border-t border-border/60 pt-6 text-center text-sm text-muted-foreground transition-[filter,opacity] duration-200">
           <p>
+           Version:{" "}
+            <a
+              className="underline underline-offset-4 transition-colors hover:text-foreground"
+              href="https://github.com/uchusei/now-next-later"
+              target="_blank"
+              rel="noreferrer"
+            >
+              v0.0.5
+            </a>
+            <br /> 
             Built by{" "}
             <a
               className="underline underline-offset-4 transition-colors hover:text-foreground"
@@ -57,18 +67,6 @@ export default function Home() {
             >
               WOWEN
             </a>
-            . 
-            <br /> 
-            Version:{" "}
-            <a
-              className="underline underline-offset-4 transition-colors hover:text-foreground"
-              href="https://github.com/uchusei/now-next-later"
-              target="_blank"
-              rel="noreferrer"
-            >
-              v0.0.1
-            </a>
-            .
           </p>
         </footer>
       </div>
