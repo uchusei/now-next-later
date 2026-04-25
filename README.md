@@ -123,3 +123,7 @@ In other words:
 - [next-themes](https://github.com/pacocoursey/next-themes)
 - [Zod](https://zod.dev/)
 - [Lucide](https://lucide.dev/)
+
+---
+
+© 2026 [WOWEN](https://wowen.se). All rights reserved.
